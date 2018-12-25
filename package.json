@@ -1,13 +1,13 @@
 {
-    "name": "Message Bot",
-    "description": "A Discord bot that tracks message counts and computes message statistics",
-    "version": "0.0.0",
-    "main": "bot.js",
-    "scripts": {
-      "start": "node bot.js"
-    },
-    "dependencies": {
-      "discord.js": "11.4.2",
-      "request": "2.88.0"
-    }
+  "name": "message-bot",
+  "description": "A Discord bot that tracks message counts and computes message statistics",
+  "version": "0.0.0",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "discord.js": "11.4.2",
+    "request": "2.88.0"
+  }
 }
