@@ -8,10 +8,10 @@ const client = new Discord.Client();
 const ONE_DAY = 86400000;
 
 // Keywords
-const ping = 'm ping';
-const help = 'm help';
-const daily = 'm rank';
-const cumulative = 'm total';
+const ping = '%ping';
+const help = '%help';
+const daily = '%rank';
+const cumulative = '%total';
 
 let data = {};
 
