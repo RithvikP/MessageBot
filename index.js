@@ -1,7 +1,7 @@
 const Discord = require('discord.js');
 const fs = require('fs');
 
-const config = require('./config.json');
+// const config = require('./config.json');
 
 const client = new Discord.Client();
 
@@ -96,13 +96,13 @@ function updateRankings(username, server) {
 		data[server][username]['daily']++;
 	}
 
-	fs.writeFile('./data.json', JSON.stringify(data) + '\n', function(err){
+	fs.writeFile('./users.json', JSON.stringify(data) + '\n', function(err){
 		if(err) throw err;
 	})
 }
 
 client.on('ready', () => {
-	fs.readFile('./data.json', 'utf8', function(err, raw) {
+	fs.readFile('./users.json', 'utf8', function(err, raw) {
 		if (err) {
 			console.log(err);
 			return;
@@ -160,4 +160,4 @@ client.on('message', msg => {
 
 });
 
-client.login(config.botToken);
+client.login(/*config.botToken*/process.env.BOT_TOKEN);
