@@ -8,29 +8,29 @@ const client = new Discord.Client();
 const ONE_DAY = 86400000;
 
 // Keywords
-const ping = '%ping';
-const help = '%help';
-const daily = '%rank';
-const cumulative = '%total';
+const ping = '=ping';
+const help = '=help';
+const daily = '=rank';
+const cumulative = '=total';
 
 let data = {};
 
 function getHelp() {
 	let helpList = [
 		{
-			name: '%ping',
+			name: '=ping',
 			value: 'Bot ping'
 		},
 		{
-			name: '%rank',
+			name: '=rank',
 			value: 'Daily message count rankings'
 		},
 		{
-			name: '%total',
+			name: '=total',
 			value: 'Cumulative message count rankings'
 		},
 		{
-			name: '%help',
+			name: '=help',
 			value: 'This menu'
 		}
 	];
