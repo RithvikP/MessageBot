@@ -18,19 +18,19 @@ let data = {};
 function getHelp() {
 	let helpList = [
 		{
-			name: 'm ping',
+			name: '%ping',
 			value: 'Bot ping'
 		},
 		{
-			name: 'm rank',
+			name: '%rank',
 			value: 'Daily message count rankings'
 		},
 		{
-			name: 'm total',
+			name: '%total',
 			value: 'Cumulative message count rankings'
 		},
 		{
-			name: 'm help',
+			name: '%help',
 			value: 'This menu'
 		}
 	];
