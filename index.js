@@ -1,9 +1,10 @@
 const Discord = require('discord.js');
 const fs = require('fs');
+let firebaseAdmin = require('firebase-admin');
 
 const config = require('./config.json');
-
 const client = new Discord.Client();
+let dataRef;
 
 const ONE_DAY = 86400000;
 
@@ -12,8 +13,6 @@ const ping = '=ping';
 const help = '=help';
 const daily = '=rank';
 const cumulative = '=total';
-
-let data = {};
 
 function getHelp() {
 	let helpList = [
@@ -38,92 +37,119 @@ function getHelp() {
 	return helpList;
 }
 
-function getDailyRankings(server) {
-	let rankings = '';
-	let count = 1;
-	for (let d in data[server]) {
-		rankings+= count+': '+d+': '+data[server][d].daily+'\n';
-		count++;
+function sortJsonToArray(values, daily) {
+	let arrValues =[];
+
+	for(let v in values) {
+		arrValues.push({
+			"username": v,
+			"daily": values[v]['daily'],
+			"cumulative": values[v]['cumulative']
+		});
 	}
 
-	return rankings;
+	arrValues.sort((a,b) => {
+		if(daily) {
+			if(a.daily > b.daily) return -1;
+			else return 1;
+		}
+		else {
+			if(a.cumulative > b.cumulative) return -1;
+			else return 1;
+		}
+	});
+	
+	return arrValues;
 }
 
-function getCumulativeRankings(server) {
-	let rankings = '';
-	let count = 1;
-	for (let d in data[server]) {
-		rankings+= count+': '+d+': '+data[server][d].total+'\n';
-		count++;
-	}
+function getDailyRankings(server, msg) {
 
-	return rankings;
+	dataRef.child(server).once('value', (data) => {
+		let values = data.val();
+		let rankings = '';
+		let count = 1;
+
+		let sortedValues = sortJsonToArray(values, true);
+
+		sortedValues.forEach((val) => {
+			rankings += count + ': '+ val.username +': ' + val.daily + '\n';
+			count++;
+		});
+
+		msg.channel.send({embed: {
+			color: 0x437fe0,
+			title: "Daily Rankings",
+			description: rankings
+		}});
+	});
+
+}
+
+function getCumulativeRankings(server, msg) {
+
+	dataRef.child(server).once('value', (data) => {
+		let values = data.val();
+		let rankings = '';
+		let count = 1;
+
+		let sortedValues = sortJsonToArray(values, true);
+
+		sortedValues.forEach((val) => {
+			rankings += count + ': '+ val.username +': ' + val.cumulative + '\n';
+			count++;
+		});
+
+		msg.channel.send({embed: {
+			color: 0x0c9926,
+			title: "Cumulative Rankings",
+			description: rankings
+		}});
+	});
+	
 }
 
 function updateRankings(username, server) {
+	
+	dataRef.child(server).once('value', (data) => {
+		let values = data.val();
+		let write = {};
 
-	if(Date.now() - data['time'] > ONE_DAY) {
-		for (let s in data) {
-			if (s !== 'time') {
-				for (let d in data[s]) {
-					console.log(d);
-					data[s][d].daily = 0;
-				}
-			}
+		if(values && values[username]) {
+			let addition = {"daily": values[username]['daily'] + 1, "cumulative": values[username]['cumulative'] + 1};
+			write[username] = addition;
+
+			dataRef.child(server).update(write);
 		}
+		else {
+			let addition = {"daily": 1, "cumulative": 1};
+			write[username] = addition;
 
-		let time = new Date();
-		time.setHours(0);
-		time.setMinutes(0);
-		time.setSeconds(0);
-		time.setMilliseconds(0);
-		time = time.getTime();
-		data['time'] = time;
-	}
-
-
-	if (!data[server]) {
-		data[server] = {};
-	}
-	if (!data[server][username]) {
-		data[server][username] = {
-			total: 1,
-			daily: 1
+			dataRef.child(server).update(write);
 		}
-	}
-	else {
-		data[server][username]['total']++;
-		data[server][username]['daily']++;
-	}
-
-	fs.writeFile('./users.json', JSON.stringify(data) + '\n', function(err){
-		if(err) throw err;
-	})
+	});
+		  
 }
 
 client.on('ready', () => {
-	fs.readFile('./users.json', 'utf8', function(err, raw) {
-		if (err) {
-			console.log(err);
-			return;
+	firebaseAdmin.initializeApp({
+		credential: firebaseAdmin.credential.cert({
+		  projectId: config.firebase.projectId,
+		  clientEmail: config.firebase.clientEmail,
+		  privateKey: config.firebase.privateKey
+		}),
+		databaseURL: config.firebase.databaseURL,
+		databaseAuthVariableOverride: {
+			uid: config.firebase.workerUid
 		}
-		data = JSON.parse(raw);
-		if(!data['time']) {
-			let time = new Date();
-			time.setHours(0);
-			time.setMinutes(0);
-			time.setSeconds(0);
-			time.setMilliseconds(0);
-			time = time.getTime();
-	
-			data['time'] = time;
-			console.log('Time set up');
-		}
-		console.log('Ready');
 	});
+
+	let db = firebaseAdmin.database();
+	dataRef = db.ref(config.firebase.dataNode);
+
+	console.log('Ready');
 });
 
-client.on('message', msg => {
+client.on('message', (msg) => {
 	// Ping
 	if (msg.content === ping) {
 		msg.reply('Pong! (' + client.ping+'s)');
@@ -140,24 +166,15 @@ client.on('message', msg => {
 
 	// Daily rankings
 	if (msg.content === daily) {
-		msg.channel.send({embed: {
-			color: 0x437fe0,
-			title: "Daily Rankings",
-			description: getDailyRankings(msg.guild.id)
-		}});
+		getDailyRankings(msg.guild.id, msg);
 	}
 
 	// Cumulative rankings
 	if(msg.content === cumulative) {
-		msg.channel.send({embed: {
-			color: 0x0c9926,
-			title: "Cumulative Rankings",
-			description: getCumulativeRankings(msg.guild.id)
-		}});
+		getCumulativeRankings(msg.guild.id, msg);
 	}
 
 	updateRankings(msg.author.username, msg.guild.id);
-
 });
 
 client.login(config.botToken);
