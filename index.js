@@ -1,6 +1,6 @@
 const Discord = require('discord.js');
 const fs = require('fs');
-let firebaseAdmin = require('firebase-admin');
+const firebaseAdmin = require('firebase-admin');
 
 const config = require('./config.json');
 const client = new Discord.Client();
